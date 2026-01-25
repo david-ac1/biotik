@@ -91,7 +91,7 @@ export default function Marketplace() {
       <DashboardSidebar userRole="buyer" />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader userName="Hotel Kigali" userRole="B2B Buyer" />
+        <DashboardHeader />
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto p-6">

@@ -72,11 +72,7 @@ export default function CommandCenter() {
       <DashboardSidebar userRole="admin" />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          title="Auditor Command Center"
-          userName="Dr. Aris K." 
-          userRole="Senior Auditor" 
-        />
+        <DashboardHeader title="Auditor Command Center" />
         
         <main className="flex-1 overflow-y-auto p-6">
           <div className="grid lg:grid-cols-12 gap-6">

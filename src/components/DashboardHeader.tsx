@@ -1,4 +1,5 @@
-import { Bell, MessageSquare, Moon, Sun, Search } from "lucide-react";
+import { Bell, MessageSquare, Moon, Sun, Search, LogOut, User, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,27 +12,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardHeaderProps {
   title?: string;
   subtitle?: string;
-  userName?: string;
-  userRole?: string;
-  userAvatar?: string;
 }
 
 export function DashboardHeader({
   title,
   subtitle,
-  userName = "User",
-  userRole = "Farmer",
-  userAvatar,
 }: DashboardHeaderProps) {
   const [isDark, setIsDark] = useState(false);
+  const navigate = useNavigate();
+  const { profile, role, signOut } = useAuth();
+
+  const userName = profile?.full_name || "User";
+  const userAvatar = profile?.avatar_url || undefined;
+  
+  const roleLabels: Record<string, string> = {
+    farmer: "Farmer",
+    buyer: "B2B Buyer",
+    admin: "Senior Auditor",
+  };
+  const userRole = role ? roleLabels[role] : "User";
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
   };
 
   return (
@@ -91,11 +104,17 @@ export function DashboardHeader({
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 Log out
               </DropdownMenuItem>
             </DropdownMenuContent>

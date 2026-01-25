@@ -1,14 +1,18 @@
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BiotikLogo } from "@/components/BiotikLogo";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-farm.jpg";
 
 type UserRole = "farmer" | "buyer" | "admin";
+type AuthMode = "signin" | "signup";
 
 const roleLabels: Record<UserRole, string> = {
   farmer: "Farmer",
@@ -17,15 +21,56 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, signUp } = useAuth();
+  const { toast } = useToast();
+  
+  const [mode, setMode] = useState<AuthMode>("signin");
   const [role, setRole] = useState<UserRole>("farmer");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const from = location.state?.from?.pathname || (role === "admin" ? "/command-center" : "/dashboard");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate to dashboard based on role
-    window.location.href = role === "admin" ? "/command-center" : "/dashboard";
+    setIsLoading(true);
+
+    try {
+      if (mode === "signup") {
+        const { error } = await signUp(email, password, fullName, role);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Sign up failed",
+            description: error.message,
+          });
+          return;
+        }
+        toast({
+          title: "Account created!",
+          description: "You can now sign in with your credentials.",
+        });
+        setMode("signin");
+      } else {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Sign in failed",
+            description: error.message,
+          });
+          return;
+        }
+        navigate(from, { replace: true });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,10 +141,12 @@ export default function Login() {
               transition={{ delay: 0.2 }}
             >
               <h1 className="text-3xl font-display font-bold mb-2 text-foreground">
-                Welcome Back
+                {mode === "signin" ? "Welcome Back" : "Create Account"}
               </h1>
               <p className="text-muted-foreground mb-8">
-                Enter your credentials to access the stewardship dashboard.
+                {mode === "signin" 
+                  ? "Enter your credentials to access the stewardship dashboard."
+                  : "Sign up to join the Biotik ecosystem."}
               </p>
 
               {/* Role Selector */}
@@ -107,6 +154,7 @@ export default function Login() {
                 {(Object.keys(roleLabels) as UserRole[]).map((r) => (
                   <button
                     key={r}
+                    type="button"
                     onClick={() => setRole(r)}
                     className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all ${
                       role === r
@@ -120,6 +168,24 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                {mode === "signup" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Ebuka Okafor"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <div className="relative">
@@ -139,12 +205,14 @@ export default function Login() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <Label htmlFor="password">Password</Label>
-                    <button
-                      type="button"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
+                    {mode === "signin" && (
+                      <button
+                        type="button"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    )}
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -156,6 +224,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 pr-10"
                       required
+                      minLength={6}
                     />
                     <button
                       type="button"
@@ -171,24 +240,51 @@ export default function Login() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Checkbox id="remember" />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    Keep me logged in for 30 days
-                  </Label>
-                </div>
+                {mode === "signin" && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="remember" />
+                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                      Keep me logged in for 30 days
+                    </Label>
+                  </div>
+                )}
 
-                <Button type="submit" className="w-full h-12 text-base font-medium">
-                  Sign In to Dashboard
-                  <ArrowRight className="ml-2 w-5 h-5" />
+                <Button type="submit" className="w-full h-12 text-base font-medium" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      {mode === "signin" ? "Sign In to Dashboard" : "Create Account"}
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </>
+                  )}
                 </Button>
               </form>
 
               <p className="text-center mt-6 text-muted-foreground text-sm">
-                Interested in joining Biotik?{" "}
-                <a href="#" className="text-primary font-medium hover:underline">
-                  Request Access
-                </a>
+                {mode === "signin" ? (
+                  <>
+                    Don't have an account?{" "}
+                    <button 
+                      type="button"
+                      onClick={() => setMode("signup")} 
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <button 
+                      type="button"
+                      onClick={() => setMode("signin")} 
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Sign In
+                    </button>
+                  </>
+                )}
               </p>
             </motion.div>
           </div>
