@@ -1,29 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Search, 
-  Grid3X3, 
-  List, 
-  MapPin, 
-  ArrowRight,
-  ShieldCheck,
-  Leaf,
-  Users,
-  Sparkles
-} from "lucide-react";
+import { Search, Grid3X3, List, MapPin, ArrowRight, ShieldCheck, Leaf, Users, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import chicken1 from "@/assets/chicken-1.jpg";
@@ -105,13 +89,10 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen flex w-full bg-background">
       <DashboardSidebar userRole="buyer" />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
-        <DashboardHeader 
-          userName="Hotel Kigali" 
-          userRole="B2B Buyer" 
-        />
-        
+        <DashboardHeader userName="Hotel Kigali" userRole="B2B Buyer" />
+
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto p-6">
             <div className="flex gap-8">
@@ -200,12 +181,8 @@ export default function Marketplace() {
                   className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4"
                 >
                   <div>
-                    <h1 className="text-3xl font-display font-bold text-foreground mb-1">
-                      Stewardship Marketplace
-                    </h1>
-                    <p className="text-primary font-medium">
-                      Verified Clinical Grade Poultry Batches
-                    </p>
+                    <h1 className="text-3xl font-display font-bold text-foreground mb-1">Stewardship Marketplace</h1>
+                    <p className="text-primary font-medium">Verified Clinical Grade Poultry Batches</p>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -256,8 +233,8 @@ export default function Marketplace() {
                               batch.grade === "gold"
                                 ? "bg-stewardship-gold text-stewardship-gold-foreground"
                                 : batch.grade === "silver"
-                                ? "bg-muted-foreground text-muted"
-                                : "bg-muted text-muted-foreground"
+                                  ? "bg-muted-foreground text-muted"
+                                  : "bg-muted text-muted-foreground"
                             }`}
                           >
                             {batch.grade === "gold" && "✦ "}
@@ -272,9 +249,7 @@ export default function Marketplace() {
                           <div className="flex items-start justify-between mb-3">
                             <h3 className="font-display font-bold text-lg">{batch.name}</h3>
                             <div className="text-right">
-                              <span className="text-xs text-primary uppercase font-semibold">
-                                Premium
-                              </span>
+                              <span className="text-xs text-primary uppercase font-semibold">Premium</span>
                               <p className="font-display font-bold">{batch.premium}</p>
                             </div>
                           </div>
@@ -293,9 +268,7 @@ export default function Marketplace() {
                                 {impactLabels[batch.impactType]}
                               </span>
                             </div>
-                            <p className="text-sm font-semibold text-primary">
-                              {batch.impactValue}
-                            </p>
+                            <p className="text-sm font-semibold text-primary">{batch.impactValue}</p>
                           </div>
 
                           <Button variant="outline" className="w-full group/btn">
@@ -314,11 +287,17 @@ export default function Marketplace() {
           {/* Footer */}
           <footer className="border-t border-border py-6 mt-12">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-              <p>© 2024 Biotik Stewardship Platforms. All batches are laboratory verified.</p>
+              <p>© 2026 Biotik Stewardship Platforms. All batches are laboratory verified.</p>
               <div className="flex gap-6">
-                <a href="#" className="hover:text-foreground">Privacy Policy</a>
-                <a href="#" className="hover:text-foreground">Terms of Procurement</a>
-                <a href="#" className="hover:text-foreground">Stewardship Protocol v4.2</a>
+                <a href="#" className="hover:text-foreground">
+                  Privacy Policy
+                </a>
+                <a href="#" className="hover:text-foreground">
+                  Terms of Procurement
+                </a>
+                <a href="#" className="hover:text-foreground">
+                  Stewardship Protocol v4.2
+                </a>
               </div>
             </div>
           </footer>
