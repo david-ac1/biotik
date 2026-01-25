@@ -1,46 +1,36 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
+  Plus,
   MessageCircle, 
   QrCode, 
   Trophy, 
   HelpCircle,
-  Check,
-  Phone,
-  Camera,
-  Send
+  Bird,
+  TrendingUp
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
+import { BatchCard } from "@/components/batch/BatchCard";
+import { CreateBatchDialog } from "@/components/batch/CreateBatchDialog";
+import { useBatches } from "@/hooks/useBatches";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function FarmerLogging() {
-  const batchStats = [
-    { label: "Current Batch", value: "#102", sublabel: "(Cobb 500)" },
-    { label: "Growth Day", value: "Day 28", sublabel: null },
-    { label: "Health Status", value: "Green", sublabel: null, isStatus: true },
-    { label: "Integrity Score", value: "98%", sublabel: null, isScore: true },
-  ];
+  const { profile } = useAuth();
+  const { batches, isLoading } = useBatches();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const chatMessages = [
-    {
-      type: "bot",
-      text: "Hello Farmer Ebuka! Welcome to your Biotik Stewardship Dashboard. You are currently managing Batch #102 (Cobb 500). Your current health status is: Green 🟢.",
-      time: "1:37 PM",
-    },
-    { type: "user", text: "1", time: "1:39 PM" },
-    {
-      type: "bot",
-      text: "📊 Day 28: Daily Log Let's keep the streak alive! How many birds died today? (Please reply with a number)",
-      time: "1:39 PM",
-    },
-    { type: "user", text: "0", time: "1:42 PM" },
-    {
-      type: "bot",
-      text: "📸 Verification Time: To confirm your Stewardship Gold status, please send: A photo of today's empty feed bags. A wide photo of the flock.",
-      time: "1:43 PM",
-    },
-  ];
+  const activeBatches = batches.filter((b) => b.status === "active");
+  const completedBatches = batches.filter((b) => b.status === "completed");
+  
+  // Calculate totals
+  const totalBirds = activeBatches.reduce((sum, b) => sum + (b.current_count || b.initial_count), 0);
+  const avgScore = activeBatches.length > 0
+    ? Math.round(activeBatches.reduce((sum, b) => sum + b.integrity_score, 0) / activeBatches.length)
+    : 0;
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -57,194 +47,189 @@ export default function FarmerLogging() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
-              <h1 className="text-3xl font-display font-bold text-foreground mb-2">
-                Livestock Logging
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your farm stewardship through automated WhatsApp synchronization.
-              </p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="text-3xl font-display font-bold text-foreground mb-2">
+                    Livestock Dashboard
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Welcome back, {profile?.full_name || "Farmer"}. Manage your batches and track stewardship.
+                  </p>
+                </div>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Batch
+                </Button>
+              </div>
             </motion.div>
 
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Bird className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Active Batches</p>
+                      <p className="text-2xl font-display font-bold">{activeBatches.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-stewardship-gold/10 flex items-center justify-center">
+                      <Trophy className="w-5 h-5 text-stewardship-gold" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Birds</p>
+                      <p className="text-2xl font-display font-bold">{totalBirds.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg. Score</p>
+                      <p className="text-2xl font-display font-bold text-primary">{avgScore}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Completed</p>
+                      <p className="text-2xl font-display font-bold">{completedBatches.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid lg:grid-cols-3 gap-6">
-              {/* Left Column */}
+              {/* Left Column - Batches */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Batch Overview Card */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle className="text-lg font-display">Batch Overview</CardTitle>
-                      <span className="badge-gold">Stewardship Gold Status</span>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {batchStats.map((stat, i) => (
-                          <div key={i} className="stat-card">
-                            <span className="stat-label">{stat.label}</span>
-                            <span className={`stat-value ${stat.isScore ? "text-primary" : ""}`}>
-                              {stat.isStatus && (
-                                <span className="inline-flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-success" />
-                                  {stat.value}
-                                </span>
-                              )}
-                              {!stat.isStatus && stat.value}
-                            </span>
-                            {stat.sublabel && (
-                              <span className="text-xs text-muted-foreground">{stat.sublabel}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                {/* WhatsApp Connect Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row items-center gap-8">
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-display font-bold mb-2">
-                            Connect WhatsApp Bot
-                          </h3>
-                          <p className="text-muted-foreground mb-6">
-                            Link your account to the Biotik AI Steward to start your daily 
-                            logging trail. Our AI will verify your photos and logs automatically.
-                          </p>
-                          
-                          <div className="space-y-3">
-                            {[
-                              { num: 1, text: "Open WhatsApp on your mobile phone" },
-                              { num: 2, text: "Scan the QR code to the right with your camera" },
-                              { num: 3, text: 'Send "HELLO" to begin your Day 28 stewardship log', highlight: "HELLO" },
-                            ].map((step) => (
-                              <div key={step.num} className="flex items-start gap-3">
-                                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center flex-shrink-0">
-                                  {step.num}
-                                </span>
-                                <span className="text-sm text-foreground">
-                                  {step.highlight ? (
-                                    <>
-                                      Send "<span className="text-primary font-semibold">{step.highlight}</span>" to begin your Day 28 stewardship log
-                                    </>
-                                  ) : (
-                                    step.text
-                                  )}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="flex-shrink-0">
-                          <div className="w-40 h-40 bg-whatsapp-green rounded-2xl flex items-center justify-center">
-                            <QrCode className="w-24 h-24 text-primary-foreground" />
-                          </div>
-                          <p className="text-center text-xs text-muted-foreground mt-2 uppercase tracking-wider">
-                            Scan to Sync
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <h2 className="font-display font-bold text-xl mb-4">Active Batches</h2>
+                  
+                  {isLoading ? (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {[1, 2].map((i) => (
+                        <Card key={i} className="animate-pulse">
+                          <CardContent className="p-5 h-64" />
+                        </Card>
+                      ))}
+                    </div>
+                  ) : activeBatches.length === 0 ? (
+                    <Card>
+                      <CardContent className="p-12 text-center">
+                        <Bird className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="font-display font-bold text-lg mb-2">No active batches</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Create your first batch to start tracking your poultry.
+                        </p>
+                        <Button onClick={() => setShowCreateDialog(true)}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Batch
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {activeBatches.map((batch) => (
+                        <BatchCard key={batch.id} batch={batch} />
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Rewards Card */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card className="bg-stewardship-gold/5 border-stewardship-gold/20">
-                    <CardContent className="p-6 flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-stewardship-gold/20 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-7 h-7 text-stewardship-gold" />
-                      </div>
-                      <div>
-                        <h4 className="font-display font-semibold text-stewardship-gold mb-1">
-                          Stewardship Gold Rewards
-                        </h4>
-                        <p className="text-sm text-foreground">
-                          You've earned an extra <strong>450 NGN</strong> per bird for this batch. 
-                          Keep your health status green to maintain this premium rate!
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                {activeBatches.some((b) => b.stewardship_grade === "gold") && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Card className="bg-stewardship-gold/5 border-stewardship-gold/20">
+                      <CardContent className="p-6 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-stewardship-gold/20 flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-7 h-7 text-stewardship-gold" />
+                        </div>
+                        <div>
+                          <h4 className="font-display font-semibold text-stewardship-gold mb-1">
+                            Stewardship Gold Rewards
+                          </h4>
+                          <p className="text-sm text-foreground">
+                            You have Gold status batches! You'll earn premium rates on verified sales.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
               </div>
 
-              {/* Right Column - WhatsApp Preview */}
+              {/* Right Column - WhatsApp Connect */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className="lg:col-span-1"
               >
-                <div className="bg-foreground rounded-[2.5rem] p-3 shadow-2xl">
-                  <div className="bg-whatsapp-chat rounded-[2rem] overflow-hidden h-[600px] flex flex-col">
-                    {/* Chat Header */}
-                    <div className="bg-primary px-4 py-3 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                        <MessageCircle className="w-5 h-5 text-primary-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-primary-foreground font-semibold text-sm">
-                          Biotik AI Steward
-                        </p>
-                        <p className="text-primary-foreground/70 text-xs">Online</p>
-                      </div>
-                      <div className="flex gap-4 text-primary-foreground/80">
-                        <Phone className="w-5 h-5" />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageCircle className="w-5 h-5 text-whatsapp-green" />
+                      WhatsApp Bot
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Connect to the Biotik AI Steward to log data directly from WhatsApp.
+                    </p>
+                    
+                    <div className="flex justify-center">
+                      <div className="w-32 h-32 bg-whatsapp-green rounded-2xl flex items-center justify-center">
+                        <QrCode className="w-20 h-20 text-primary-foreground" />
                       </div>
                     </div>
 
-                    {/* Chat Messages */}
-                    <div className="flex-1 p-4 space-y-3 overflow-y-auto scrollbar-thin">
-                      {chatMessages.map((msg, i) => (
-                        <div
-                          key={i}
-                          className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[85%] rounded-xl px-3 py-2 ${
-                              msg.type === "user"
-                                ? "bg-whatsapp-bubble-sent text-foreground"
-                                : "bg-whatsapp-bubble text-foreground"
-                            }`}
-                          >
-                            <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                            <p className="text-[10px] text-muted-foreground text-right mt-1">
-                              {msg.time}
-                              {msg.type === "user" && (
-                                <Check className="w-3 h-3 inline ml-1 text-info" />
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Chat Input */}
-                    <div className="p-3 bg-card border-t border-border flex items-center gap-2">
-                      <div className="flex-1 bg-muted rounded-full px-4 py-2 text-sm text-muted-foreground">
-                        Type a message
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center flex-shrink-0">1</span>
+                        <span>Open WhatsApp on your phone</span>
                       </div>
-                      <button className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                        <Camera className="w-5 h-5 text-primary-foreground" />
-                      </button>
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center flex-shrink-0">2</span>
+                        <span>Scan the QR code above</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center flex-shrink-0">3</span>
+                        <span>Send "HELLO" to begin</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             </div>
 
@@ -259,6 +244,11 @@ export default function FarmerLogging() {
           </div>
         </main>
       </div>
+
+      <CreateBatchDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+      />
     </div>
   );
 }
