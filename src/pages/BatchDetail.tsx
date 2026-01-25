@@ -11,6 +11,8 @@ import {
   Camera,
   FileText,
   BarChart3,
+  Shield,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,8 +22,10 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DailyLogDialog } from "@/components/batch/DailyLogDialog";
 import { PhotoUpload } from "@/components/batch/PhotoUpload";
+import { AuditReport } from "@/components/batch/AuditReport";
 import { useBatch } from "@/hooks/useBatches";
 import { useDailyLogs } from "@/hooks/useDailyLogs";
+import { useAudit } from "@/hooks/useAudit";
 import {
   LineChart,
   Line,
@@ -37,6 +41,7 @@ export default function BatchDetail() {
   const navigate = useNavigate();
   const { data: batch, isLoading: batchLoading } = useBatch(batchId);
   const { logs, isLoading: logsLoading } = useDailyLogs(batchId);
+  const { auditBatch, isAuditing } = useAudit();
   const [showLogDialog, setShowLogDialog] = useState(false);
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
 
@@ -54,8 +59,21 @@ export default function BatchDetail() {
   const startDate = new Date(batch.start_date);
   const today = new Date();
   const dayNumber = differenceInDays(today, startDate) + 1;
-  const progress = Math.min((dayNumber / batch.expected_maturity_days) * 100, 100);
+  const progress = Math.min((dayNumber / (batch.expected_maturity_days || 42)) * 100, 100);
   const currentCount = batch.current_count || batch.initial_count;
+
+  // Calculate metrics from logs
+  const totalFeed = logs.reduce((sum, l) => sum + (l.feed_consumed_kg || 0), 0);
+  const totalMortality = logs.reduce((sum, l) => sum + (l.mortality_count || 0), 0);
+  const mortalityRate = (totalMortality / batch.initial_count) * 100;
+  const latestLog = logs[logs.length - 1];
+  const fcr = batch.total_weight_gain_kg && batch.total_weight_gain_kg > 0
+    ? (batch.total_feed_kg || 0) / batch.total_weight_gain_kg
+    : 0;
+
+  // Data completeness
+  const expectedLogs = Math.min(dayNumber, batch.expected_maturity_days || 42);
+  const dataCompleteness = expectedLogs > 0 ? Math.round((logs.length / expectedLogs) * 100) : 100;
 
   // Prepare chart data
   const chartData = logs
@@ -65,14 +83,26 @@ export default function BatchDetail() {
       day: `Day ${log.day_number}`,
       weight: log.avg_weight_g || 0,
       feed: log.feed_consumed_kg || 0,
+      fcr: log.fcr_cumulative || 0,
     }));
 
   const gradeColors = {
     gold: "bg-stewardship-gold text-stewardship-gold-foreground",
-    silver: "bg-muted-foreground text-muted",
+    silver: "bg-muted-foreground text-white",
     standard: "bg-muted text-muted-foreground",
     pending: "bg-info/10 text-info",
   };
+
+  const handleRunAudit = () => {
+    if (batchId) {
+      auditBatch.mutate(batchId);
+    }
+  };
+
+  // Parse anomaly flags from batch
+  const anomalyFlags = Array.isArray(batch.anomaly_flags) 
+    ? batch.anomaly_flags as { type: "warning" | "critical"; message: string; day_number?: number }[]
+    : [];
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -111,16 +141,30 @@ export default function BatchDetail() {
                     Started {format(startDate, "MMMM d, yyyy")}
                   </p>
                 </div>
-                <Badge
-                  className={gradeColors[batch.stewardship_grade as keyof typeof gradeColors] || gradeColors.pending}
-                >
-                  {batch.stewardship_grade === "gold" && "✦ "}
-                  {batch.stewardship_grade.charAt(0).toUpperCase() + batch.stewardship_grade.slice(1)} Status
-                </Badge>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleRunAudit}
+                    disabled={isAuditing}
+                  >
+                    {isAuditing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Shield className="mr-2 h-4 w-4" />
+                    )}
+                    {isAuditing ? "Auditing..." : "Run Audit"}
+                  </Button>
+                  <Badge
+                    className={gradeColors[batch.stewardship_grade as keyof typeof gradeColors] || gradeColors.pending}
+                  >
+                    {batch.stewardship_grade === "gold" && "✦ "}
+                    {(batch.stewardship_grade || "pending").charAt(0).toUpperCase() + (batch.stewardship_grade || "pending").slice(1)} Status
+                  </Badge>
+                </div>
               </div>
 
               {/* Stats Row */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
@@ -130,7 +174,7 @@ export default function BatchDetail() {
                       <div>
                         <p className="text-sm text-muted-foreground">Growth Day</p>
                         <p className="text-2xl font-display font-bold">
-                          {dayNumber} <span className="text-sm font-normal text-muted-foreground">/ {batch.expected_maturity_days}</span>
+                          {dayNumber} <span className="text-sm font-normal text-muted-foreground">/ {batch.expected_maturity_days || 42}</span>
                         </p>
                       </div>
                     </div>
@@ -156,13 +200,35 @@ export default function BatchDetail() {
                 <Card>
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        fcr === 0 ? "bg-muted" : fcr < 1.7 ? "bg-success/10" : fcr <= 2.0 ? "bg-warning/10" : "bg-destructive/10"
+                      }`}>
+                        <TrendingUp className={`w-5 h-5 ${
+                          fcr === 0 ? "text-muted-foreground" : fcr < 1.7 ? "text-success" : fcr <= 2.0 ? "text-warning" : "text-destructive"
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">FCR</p>
+                        <p className={`text-2xl font-display font-bold ${
+                          fcr === 0 ? "text-muted-foreground" : fcr < 1.7 ? "text-success" : fcr <= 2.0 ? "text-warning" : "text-destructive"
+                        }`}>
+                          {fcr > 0 ? fcr.toFixed(2) : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-primary" />
+                        <Shield className="w-5 h-5 text-primary" />
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Integrity Score</p>
                         <p className="text-2xl font-display font-bold text-primary">
-                          {batch.integrity_score}%
+                          {batch.integrity_score || 0}%
                         </p>
                       </div>
                     </div>
@@ -200,6 +266,26 @@ export default function BatchDetail() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Audit Report Section */}
+            {(batch.last_audit_at || batch.integrity_score > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <AuditReport
+                  integrityScore={batch.integrity_score || 0}
+                  stewardshipGrade={batch.stewardship_grade || "pending"}
+                  fcr={fcr}
+                  mortalityRate={mortalityRate}
+                  dataCompleteness={dataCompleteness}
+                  photoCoverage={0} // TODO: calculate from photos
+                  anomalyFlags={anomalyFlags}
+                  lastAuditAt={batch.last_audit_at}
+                />
+              </motion.div>
+            )}
 
             {/* Tabs */}
             <Tabs defaultValue="logs" className="space-y-6">
@@ -275,6 +361,16 @@ export default function BatchDetail() {
                                 <p className="text-muted-foreground">Avg Weight (g)</p>
                                 <p className="font-semibold">{log.avg_weight_g || "-"}</p>
                               </div>
+                              {log.fcr_cumulative && (
+                                <div className="text-center">
+                                  <p className="text-muted-foreground">FCR</p>
+                                  <p className={`font-semibold ${
+                                    log.fcr_cumulative < 1.7 ? "text-success" : log.fcr_cumulative <= 2.0 ? "text-warning" : "text-destructive"
+                                  }`}>
+                                    {log.fcr_cumulative.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -326,43 +422,79 @@ export default function BatchDetail() {
               </TabsContent>
 
               <TabsContent value="analytics">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Growth Trajectory</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {chartData.length > 0 ? (
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                            <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
-                            <YAxis stroke="hsl(var(--muted-foreground))" />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: "hsl(var(--card))",
-                                border: "1px solid hsl(var(--border))",
-                                borderRadius: "8px",
-                              }}
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="weight"
-                              name="Weight (g)"
-                              stroke="hsl(var(--primary))"
-                              strokeWidth={2}
-                              dot={{ fill: "hsl(var(--primary))" }}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    ) : (
-                      <div className="h-64 flex items-center justify-center text-muted-foreground">
-                        <p>Add daily logs to see growth analytics</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <div className="grid gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Growth Trajectory</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {chartData.length > 0 ? (
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
+                              <YAxis stroke="hsl(var(--muted-foreground))" />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "hsl(var(--card))",
+                                  border: "1px solid hsl(var(--border))",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="weight"
+                                name="Weight (g)"
+                                stroke="hsl(var(--primary))"
+                                strokeWidth={2}
+                                dot={{ fill: "hsl(var(--primary))" }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      ) : (
+                        <div className="h-64 flex items-center justify-center text-muted-foreground">
+                          <p>Add daily logs to see growth analytics</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {chartData.length > 0 && chartData.some(d => d.fcr > 0) && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>FCR Trend</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-48">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData.filter(d => d.fcr > 0)}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                              <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
+                              <YAxis domain={[1, 3]} stroke="hsl(var(--muted-foreground))" />
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: "hsl(var(--card))",
+                                  border: "1px solid hsl(var(--border))",
+                                  borderRadius: "8px",
+                                }}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey="fcr"
+                                name="FCR"
+                                stroke="hsl(var(--warning))"
+                                strokeWidth={2}
+                                dot={{ fill: "hsl(var(--warning))" }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           </div>

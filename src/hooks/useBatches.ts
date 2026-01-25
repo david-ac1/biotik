@@ -9,16 +9,22 @@ export interface Batch {
   batch_code: string;
   breed: string;
   start_date: string;
-  expected_maturity_days: number;
+  expected_maturity_days: number | null;
   initial_count: number;
   current_count: number | null;
-  status: string;
-  stewardship_grade: string;
-  integrity_score: number;
-  is_available_for_sale: boolean;
+  status: string | null;
+  stewardship_grade: string | null;
+  integrity_score: number | null;
+  is_available_for_sale: boolean | null;
   price_per_kg: number | null;
-  created_at: string;
-  updated_at: string;
+  created_at: string | null;
+  updated_at: string | null;
+  // New audit fields
+  total_feed_kg: number | null;
+  total_weight_gain_kg: number | null;
+  last_audit_at: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  anomaly_flags: any[] | null;
 }
 
 export interface CreateBatchInput {

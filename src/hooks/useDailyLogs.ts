@@ -7,12 +7,13 @@ export interface DailyLog {
   batch_id: string;
   log_date: string;
   day_number: number;
-  mortality_count: number;
+  mortality_count: number | null;
   feed_consumed_kg: number | null;
   avg_weight_g: number | null;
   notes: string | null;
-  logged_via: string;
-  created_at: string;
+  logged_via: string | null;
+  created_at: string | null;
+  fcr_cumulative: number | null;
 }
 
 export interface CreateLogInput {
