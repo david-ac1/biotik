@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import FarmerLogging from "./pages/FarmerLogging";
 import BatchDetail from "./pages/BatchDetail";
 import Marketplace from "./pages/Marketplace";
+import Orders from "./pages/Orders";
 import CommandCenter from "./pages/CommandCenter";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["buyer", "farmer", "admin"]}>
                   <Marketplace />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute allowedRoles={["buyer", "farmer", "admin"]}>
+                  <Orders />
                 </ProtectedRoute>
               }
             />
