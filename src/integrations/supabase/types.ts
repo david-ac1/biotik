@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       batches: {
         Row: {
+          anomaly_flags: Json | null
           batch_code: string
           breed: string
           created_at: string | null
@@ -26,13 +27,17 @@ export type Database = {
           initial_count: number
           integrity_score: number | null
           is_available_for_sale: boolean | null
+          last_audit_at: string | null
           price_per_kg: number | null
           start_date: string
           status: string | null
           stewardship_grade: string | null
+          total_feed_kg: number | null
+          total_weight_gain_kg: number | null
           updated_at: string | null
         }
         Insert: {
+          anomaly_flags?: Json | null
           batch_code: string
           breed: string
           created_at?: string | null
@@ -43,13 +48,17 @@ export type Database = {
           initial_count: number
           integrity_score?: number | null
           is_available_for_sale?: boolean | null
+          last_audit_at?: string | null
           price_per_kg?: number | null
           start_date: string
           status?: string | null
           stewardship_grade?: string | null
+          total_feed_kg?: number | null
+          total_weight_gain_kg?: number | null
           updated_at?: string | null
         }
         Update: {
+          anomaly_flags?: Json | null
           batch_code?: string
           breed?: string
           created_at?: string | null
@@ -60,10 +69,13 @@ export type Database = {
           initial_count?: number
           integrity_score?: number | null
           is_available_for_sale?: boolean | null
+          last_audit_at?: string | null
           price_per_kg?: number | null
           start_date?: string
           status?: string | null
           stewardship_grade?: string | null
+          total_feed_kg?: number | null
+          total_weight_gain_kg?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -82,6 +94,7 @@ export type Database = {
           batch_id: string
           created_at: string | null
           day_number: number
+          fcr_cumulative: number | null
           feed_consumed_kg: number | null
           id: string
           log_date: string
@@ -94,6 +107,7 @@ export type Database = {
           batch_id: string
           created_at?: string | null
           day_number: number
+          fcr_cumulative?: number | null
           feed_consumed_kg?: number | null
           id?: string
           log_date: string
@@ -106,6 +120,7 @@ export type Database = {
           batch_id?: string
           created_at?: string | null
           day_number?: number
+          fcr_cumulative?: number | null
           feed_consumed_kg?: number | null
           id?: string
           log_date?: string

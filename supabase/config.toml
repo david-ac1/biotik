@@ -1,1 +1,7 @@
 project_id = "kqtkyfivjxwkmaxmggbc"
+
+[functions.audit-batch]
+verify_jwt = false
+
+[functions.analyze-photo]
+verify_jwt = false
