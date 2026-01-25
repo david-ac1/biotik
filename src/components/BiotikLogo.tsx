@@ -12,13 +12,9 @@ const sizeMap = {
   lg: { icon: "w-8 h-8", container: "w-12 h-12", text: "text-2xl" },
 };
 
-export function BiotikLogo({ 
-  className = "", 
-  showText = true, 
-  size = "md" 
-}: BiotikLogoProps) {
+export function BiotikLogo({ className = "", showText = true, size = "md" }: BiotikLogoProps) {
   const sizes = sizeMap[size];
-  
+
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className={`${sizes.container} bg-primary rounded-lg flex items-center justify-center`}>
@@ -26,12 +22,10 @@ export function BiotikLogo({
       </div>
       {showText && (
         <div className="flex flex-col">
-          <span className={`${sizes.text} font-display font-bold tracking-tight text-foreground`}>
-            Biotik
-          </span>
+          <span className={`${sizes.text} font-display font-bold tracking-tight text-foreground`}>Biotik</span>
           {size !== "sm" && (
             <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Poultry Stewardship
+              Livestock Antibiotic Stewardship
             </span>
           )}
         </div>
