@@ -13,6 +13,7 @@ import {
   BarChart3,
   Shield,
   Loader2,
+  QrCode,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { DailyLogDialog } from "@/components/batch/DailyLogDialog";
 import { PhotoUpload } from "@/components/batch/PhotoUpload";
 import { AuditReport } from "@/components/batch/AuditReport";
+import { BatchQRCode } from "@/components/batch/BatchQRCode";
 import { useBatch } from "@/hooks/useBatches";
 import { useDailyLogs } from "@/hooks/useDailyLogs";
 import { useAudit } from "@/hooks/useAudit";
@@ -303,6 +305,10 @@ export default function BatchDetail() {
                     <BarChart3 className="w-4 h-4" />
                     Analytics
                   </TabsTrigger>
+                  <TabsTrigger value="passport" className="gap-2">
+                    <QrCode className="w-4 h-4" />
+                    QR Passport
+                  </TabsTrigger>
                 </TabsList>
 
                 <Button onClick={() => setShowLogDialog(true)}>
@@ -494,6 +500,46 @@ export default function BatchDetail() {
                       </CardContent>
                     </Card>
                   )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="passport">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <BatchQRCode batchId={batchId!} batchCode={batch.batch_code} />
+                  
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">About Batch Passports</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        The QR code links to a public verification page that buyers can scan to verify the authenticity and quality of this batch.
+                      </p>
+                      <div className="space-y-2 text-sm">
+                        <p className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-primary" />
+                          <span>Integrity score and stewardship grade</span>
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4 text-primary" />
+                          <span>Growth trajectory vs. breed benchmark</span>
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <Camera className="h-4 w-4 text-primary" />
+                          <span>Verified evidence photos</span>
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span>Complete audit trail</span>
+                        </p>
+                      </div>
+                      {batch.status !== "completed" && (
+                        <p className="text-xs text-warning">
+                          Note: The public passport will only be visible once this batch is marked as completed and available for sale.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
             </Tabs>
