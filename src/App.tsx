@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import FarmerLogging from "./pages/FarmerLogging";
 import BatchDetail from "./pages/BatchDetail";
+import BatchPassport from "./pages/BatchPassport";
 import Marketplace from "./pages/Marketplace";
 import Orders from "./pages/Orders";
 import CommandCenter from "./pages/CommandCenter";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/passport/:batchId" element={<BatchPassport />} />
             <Route
               path="/dashboard"
               element={
