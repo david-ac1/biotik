@@ -191,11 +191,11 @@ export default function Index() {
               <span className="text-xl font-display font-bold text-background">Biotik</span>
             </div>
             <div className="flex gap-6 text-sm text-background/60">
+              <Link to="/docs" className="hover:text-background">
+                Documentation
+              </Link>
               <a href="#" className="hover:text-background">
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-background">
-                Terms of Service
               </a>
               <a href="#" className="hover:text-background">
                 Contact

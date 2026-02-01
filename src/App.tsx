@@ -13,8 +13,8 @@ import BatchPassport from "./pages/BatchPassport";
 import Marketplace from "./pages/Marketplace";
 import Orders from "./pages/Orders";
 import CommandCenter from "./pages/CommandCenter";
+import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -75,7 +75,8 @@ const App = () => (
                   <CommandCenter />
                 </ProtectedRoute>
               }
-            />
+              />
+            <Route path="/docs" element={<Documentation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
