@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
+import {
   Plus,
   MessageCircle, 
   QrCode, 
@@ -234,13 +235,15 @@ export default function FarmerLogging() {
             </div>
 
             {/* Help Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              className="fixed bottom-6 left-6 w-12 h-12 rounded-full shadow-lg"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Button>
+            <Link to="/docs">
+              <Button
+                variant="outline"
+                size="icon"
+                className="fixed bottom-6 left-6 w-12 h-12 rounded-full shadow-lg"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </main>
       </div>
