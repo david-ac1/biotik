@@ -77,9 +77,9 @@ export function DashboardSidebar({ userRole = "farmer" }: DashboardSidebarProps)
       <div className="p-4 flex items-center justify-between border-b border-sidebar-border">
         {!collapsed && <BiotikLogo size="sm" />}
         {collapsed && (
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto">
+          <RouterNavLink to="/" className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mx-auto hover:opacity-80 transition-opacity">
             <span className="text-primary-foreground font-bold text-sm">B</span>
-          </div>
+          </RouterNavLink>
         )}
         <Button
           variant="ghost"

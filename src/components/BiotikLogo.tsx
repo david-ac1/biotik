@@ -1,4 +1,5 @@
 import { Leaf } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BiotikLogoProps {
   className?: string;
@@ -16,7 +17,7 @@ export function BiotikLogo({ className = "", showText = true, size = "md" }: Bio
   const sizes = sizeMap[size];
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <Link to="/" className={`flex items-center gap-3 hover:opacity-80 transition-opacity ${className}`}>
       <div className={`${sizes.container} bg-primary rounded-lg flex items-center justify-center`}>
         <Leaf className={`${sizes.icon} text-primary-foreground`} />
       </div>
@@ -30,6 +31,6 @@ export function BiotikLogo({ className = "", showText = true, size = "md" }: Bio
           )}
         </div>
       )}
-    </div>
+    </Link>
   );
 }
